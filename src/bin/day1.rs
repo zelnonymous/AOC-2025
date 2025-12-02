@@ -37,33 +37,32 @@ impl FromStr for DialInput {
 }
 impl State {
     fn turn_dial(&mut self, dial_input: &DialInput, debug: bool) {
-        let movement = match dial_input.direction {
-            Direction::Left => -dial_input.clicks,
-            Direction::Right => dial_input.clicks,
-        };
-        self.position += movement;
+        let mut moves = dial_input.clicks;
         let mut zeroes = 0;
-        while self.position < 0 {
-            self.position += 100;
-            if self.position != 0 {
+        while moves > 0 {
+            self.position = match dial_input.direction {
+                Direction::Left => self.position - 1,
+                Direction::Right => self.position + 1,
+            };
+            if self.position == -1 {
+                self.position = 99;
+            }
+            if self.position == 100 {
+                self.position = 0;
+            }
+            if self.position == 0 {
                 zeroes += 1;
             }
+            moves -= 1;
         }
-        while self.position > 99 {
-            self.position -= 100;
-            if self.position != 0 {
-                zeroes += 1;
-            }
+        if self.position == 0 {
+            self.ended_on_zero += 1;
         }
         if debug {
             println!(
                 "Moved {:?} {} to {}",
                 dial_input.direction, dial_input.clicks, self.position
             );
-        }
-        if self.position == 0 {
-            self.ended_on_zero += 1;
-            zeroes += 1;
         }
         self.passed_zero += zeroes;
         if debug && zeroes != 0 {
